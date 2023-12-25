@@ -5,114 +5,82 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import React, {useState} from 'react';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {StyleSheet, KeyboardAvoidingView, Platform} from 'react-native';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+import DateHead from './components/DateHead';
+import AddTodo from './components/AddTodo';
+import Empty from './components/Empty';
+import TodoList from './components/TodoList';
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+const styles = StyleSheet.create({
+  safeView: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+
+  avoid: {
+    flex: 1,
+  },
+});
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const today = new Date();
+  const [todos, setTodos] = useState([
+    {id: 1, text: 'work1', done: true},
+    {id: 2, text: 'work2', done: false},
+    {id: 3, text: 'work3', done: false},
+  ]);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const handleInsert = text => {
+    const nextId =
+      todos.length > 0 ? Math.max(...todos.map(todo => todo.id)) + 1 : 1;
+    const todo = {
+      id: nextId,
+      text,
+      done: false,
+    };
+
+    setTodos([...todos, todo]);
+  };
+
+  const handleToggle = id => {
+    const nextTodos = todos.map(value =>
+      value.id === id ? {...value, done: !value.done} : value,
+    );
+
+    setTodos(nextTodos);
+  };
+
+  const handleRemove = id => {
+    const newTodos = todos.filter(value => value.id !== id);
+    setTodos(newTodos);
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView edges={['bottom']} style={styles.safeView}>
+        <KeyboardAvoidingView
+          behavior={Platform.select({ios: 'padding', android: undefined})}
+          style={styles.avoid}>
+          <DateHead date={today} />
+          {todos.length === 0 ? (
+            <Empty />
+          ) : (
+            <TodoList
+              onRemove={handleRemove}
+              onToggle={handleToggle}
+              todos={todos}
+            />
+          )}
+
+          <AddTodo onInsert={handleInsert} />
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
